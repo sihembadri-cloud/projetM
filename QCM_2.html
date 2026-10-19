@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>QCM Calcul matriciel</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: une seule colonne de 720px, feuille d'examen sobre. Les touches de navigation forment une matrice 2x10, clin d'oeil au sujet. */
+:root {
+  --bg: #f3f6f8;
+  --surface: #ffffff;
+  --fg: #14212b;
+  --muted: #556676;
+  --line: #d7dfe5;
+  --accent: #0b6b8a;
+  --accent-fg: #ffffff;
+  --sel: #e1f0f6;
+  --ok: #17703f;
+  --ok-bg: #e2f3e9;
+  --bad: #b3261e;
+  --bad-bg: #fbe6e4;
+  --warn: #9a5700;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e151b;
+    --surface: #16202a;
+    --fg: #e6edf2;
+    --muted: #96a8b8;
+    --line: #2a3945;
+    --accent: #5cc0de;
+    --accent-fg: #07212b;
+    --sel: #1a3441;
+    --ok: #62d08c;
+    --ok-bg: #11301f;
+    --bad: #ff8d84;
+    --bad-bg: #3a1815;
+    --warn: #f0b24f;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e151b;
+  --surface: #16202a;
+  --fg: #e6edf2;
+  --muted: #96a8b8;
+  --line: #2a3945;
+  --accent: #5cc0de;
+  --accent-fg: #07212b;
+  --sel: #1a3441;
+  --ok: #62d08c;
+  --ok-bg: #11301f;
+  --bad: #ff8d84;
+  --bad-bg: #3a1815;
+  --warn: #f0b24f;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 16px/1.55 var(--font-body);
+  padding-block: 28px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 30;
+  background: var(--bg);
+}
+.wrap { max-width: 720px; margin: 0 auto; }
+h1, h2 { text-wrap: balance; font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(1.8rem, 6vw, 2.6rem); }
+h2 { font-size: clamp(1.4rem, 4.5vw, 1.9rem); }
+p { margin: 0; }
+code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--sel);
+  padding: 0.08em 0.4em;
+  border-radius: 4px;
+  overflow-wrap: anywhere;
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.lead { color: var(--muted); max-width: 60ch; }
+
+/* Page d'accueil */
+.stack { display: grid; gap: 22px; }
+.facts { display: flex; flex-wrap: wrap; gap: 12px 0; margin: 0; padding: 0; }
+.facts > div { padding: 0 22px; border-left: 1px solid var(--line); }
+.facts > div:first-child { padding-left: 0; border-left: 0; }
+.facts dt { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.facts dd { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; }
+.fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label { font-weight: 500; font-size: 0.92rem; }
+.field input {
+  font: inherit;
+  min-height: 46px;
+  padding: 8px 12px;
+  color: var(--fg);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  width: 100%;
+}
+.field input[aria-invalid="true"] { border-color: var(--bad); }
+.err { color: var(--bad); font-size: 0.85rem; min-height: 1.2em; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.rules { color: var(--muted); font-size: 0.92rem; display: grid; gap: 6px; padding-left: 1.1em; margin: 0; }
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  min-height: 46px;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+  cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+
+/* Epreuve */
+.bar {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  z-index: 20;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.bar-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.who { display: grid; min-width: 0; line-height: 1.3; }
+.who strong { overflow-wrap: anywhere; }
+.who span { color: var(--muted); font-size: 0.82rem; }
+.timer {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.timer.low { color: var(--warn); }
+.timer.crit { color: var(--bad); }
+.prog { display: flex; align-items: center; gap: 12px; }
+.prog-track { flex: 1; height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.prog-fill { height: 100%; width: 0; background: var(--accent); }
+.prog span { font-size: 0.82rem; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: no-preference) { .prog-fill { transition: width 0.2s; } }
+
+#qcard { scroll-margin-top: 120px; display: grid; gap: 16px; }
+.qtext { font-size: 1.15rem; line-height: 1.5; }
+.opts { display: grid; gap: 10px; }
+.opt {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.opt input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.opt:has(input:checked) { background: var(--sel); border-color: var(--accent); }
+.opt:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ltr {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+}
+.opt:has(input:checked) .ltr { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.otxt { min-width: 0; padding-top: 2px; overflow-wrap: anywhere; }
+.pager { display: flex; justify-content: space-between; gap: 10px; }
+
+.navbox { margin-top: 20px; display: grid; gap: 10px; }
+.navbox h3 { margin: 0; font-size: 0.82rem; font-weight: 500; color: var(--muted); font-family: var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; }
+.nav { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+@media (min-width: 600px) { .nav { grid-template-columns: repeat(10, 1fr); } }
+.nb {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--fg);
+  cursor: pointer;
+}
+.nb.done { background: var(--sel); border-color: var(--accent); }
+.nb.cur { outline: 2px solid var(--fg); outline-offset: 1px; font-weight: 600; }
+.finish { margin-top: 20px; display: grid; gap: 12px; }
+.confirm { border: 1px solid var(--warn); border-radius: 8px; padding: 14px; display: grid; gap: 12px; background: var(--surface); }
+
+/* Resultat */
+.score { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 16px; }
+.big { font-family: var(--font-mono); font-size: clamp(2.6rem, 11vw, 4rem); font-weight: 500; line-height: 1; font-variant-numeric: tabular-nums; }
+.pct { color: var(--muted); font-size: 1.1rem; }
+.note { color: var(--warn); font-weight: 500; }
+.chk { display: flex; align-items: center; gap: 10px; font-size: 0.95rem; }
+.chk input { width: 18px; height: 18px; accent-color: var(--accent); }
+.review { display: grid; gap: 14px; }
+.rv { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; display: grid; gap: 12px; }
+.rvh { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.rq { font-family: var(--font-mono); font-size: 0.85rem; color: var(--muted); }
+.badge { font-size: 0.8rem; font-weight: 600; padding: 2px 10px; border-radius: 999px; border: 1px solid var(--line); }
+.badge.ok { color: var(--ok); background: var(--ok-bg); border-color: var(--ok); }
+.badge.bad { color: var(--bad); background: var(--bad-bg); border-color: var(--bad); }
+.badge.blank { color: var(--warn); border-color: var(--warn); }
+.ro { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ro li { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 8px 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.ro li.good { background: var(--ok-bg); border-color: var(--ok); }
+.ro li.wrong { background: var(--bad-bg); border-color: var(--bad); }
+.tag { margin-left: auto; font-size: 0.78rem; font-weight: 600; }
+.ro li.good .tag { color: var(--ok); }
+.ro li.wrong .tag { color: var(--bad); }
+.why { color: var(--muted); font-size: 0.95rem; }
+.why strong { color: var(--fg); font-weight: 600; }
+.empty { color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <section id="start" class="stack">
+    <div class="stack" style="gap:12px">
+      <p class="eyebrow">MATLAB · QCM</p>
+      <h1>Calcul matriciel</h1>
+      <p class="lead">Opérateurs, fonctions sur les matrices et résolution de systèmes linéaires.</p>
+    </div>
+
+    <dl class="facts">
+      <div><dt>20</dt><dd>questions</dd></div>
+      <div><dt>15 min</dt><dd>temps prévu</dd></div>
+      <div><dt>1</dt><dd>bonne réponse par question</dd></div>
+    </dl>
+
+    <form id="form" class="panel stack" novalidate>
+      <div class="fields">
+        <div class="field">
+          <label for="last">Nom</label>
+          <input id="last" name="last" type="text" autocomplete="family-name" aria-describedby="e-last">
+          <span class="err" id="e-last" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="first">Prénom</label>
+          <input id="first" name="first" type="text" autocomplete="given-name" aria-describedby="e-first">
+          <span class="err" id="e-first" aria-live="polite"></span>
+        </div>
+      </div>
+      <p id="again" class="note" hidden>Nouvelle tentative : les questions et les propositions seront mélangées de nouveau.</p>
+      <div class="actions"><button class="btn" id="go" type="submit">Commencer le QCM</button></div>
+    </form>
+
+    <ul class="rules">
+      <li>Le chronomètre démarre au clic sur « Commencer ». Au bout de 15 minutes, le QCM se termine automatiquement.</li>
+      <li>L'ordre des questions et des propositions change à chaque tentative.</li>
+      <li>Vous pouvez changer de réponse et revenir à n'importe quelle question avant de terminer.</li>
+      <li>La correction détaillée s'affiche à la fin.</li>
+    </ul>
+  </section>
+
+  <section id="quiz" hidden>
+    <header class="bar">
+      <div class="bar-row">
+        <div class="who"><strong id="who"></strong><span id="att"></span></div>
+        <div class="timer" id="timer" role="timer" aria-label="Temps restant">15:00</div>
+      </div>
+      <div class="prog">
+        <div class="prog-track"><div class="prog-fill" id="pfill"></div></div>
+        <span id="ptxt"></span>
+      </div>
+    </header>
+
+    <div class="panel" id="qcard">
+      <p class="eyebrow" id="qnum"></p>
+      <p class="qtext" id="qtext"></p>
+      <div class="opts" id="opts" role="radiogroup" aria-label="Propositions"></div>
+      <div class="pager">
+        <button type="button" class="btn ghost" id="prev">Précédente</button>
+        <button type="button" class="btn ghost" id="next">Suivante</button>
+      </div>
+    </div>
+
+    <div class="navbox">
+      <h3>Aller à la question</h3>
+      <div class="nav" id="nav"></div>
+    </div>
+
+    <div class="finish">
+      <div class="actions"><button type="button" class="btn" id="finish">Terminer le QCM</button></div>
+      <div class="confirm" id="confirm" hidden>
+        <p id="confirm-txt"></p>
+        <div class="actions">
+          <button type="button" class="btn" id="confirm-yes">Terminer maintenant</button>
+          <button type="button" class="btn ghost" id="confirm-no">Revenir aux questions</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="result" class="stack" hidden>
+    <div class="stack" style="gap:10px">
+      <p class="eyebrow" id="r-who"></p>
+      <h2>Résultat</h2>
+      <div class="score"><span class="big" id="r-score"></span><span class="pct" id="r-pct"></span></div>
+      <p class="note" id="r-note" hidden>Temps écoulé : le QCM a été rendu automatiquement.</p>
+    </div>
+    <dl class="facts" id="r-facts"></dl>
+    <div class="actions">
+      <button type="button" class="btn" id="retry">Nouvelle tentative</button>
+      <button type="button" class="btn ghost" id="copy">Copier le résultat</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="only-wrong"> Afficher seulement les erreurs et les questions sans réponse</label>
+    <div class="review" id="review"></div>
+  </section>
+
+</div>
+
+<script>
+const DURATION = 15 * 60; // secondes
+
+const BANK = [
+  { q: "Quel opérateur MATLAB effectue la multiplication élément par élément de deux matrices de même taille ?",
+    o: ["`*`", "`.*`", "`^`", "`\\`"], a: 1,
+    e: "`.*` multiplie les éléments de même position, alors que `*` réalise le produit matriciel." },
+  { q: "Soit `A = [1 2; 3 4]`. Que renvoie `A*A` ?",
+    o: ["`[1 4; 9 16]`", "`[7 10; 15 22]`", "`[2 4; 6 8]`", "`[5 6; 11 12]`"], a: 1,
+    e: "Produit matriciel : 1·1+2·3 = 7, 1·2+2·4 = 10, 3·1+4·3 = 15, 3·2+4·4 = 22." },
+  { q: "Soit `A = [1 2; 3 4]`. Que renvoie `A.^2` ?",
+    o: ["`[7 10; 15 22]`", "`[1 4; 9 16]`", "`[2 4; 6 8]`", "Une erreur"], a: 1,
+    e: "`.^` élève chaque élément à la puissance indiquée, contrairement à `A^2` qui est le produit `A*A`." },
+  { q: "Que renvoie `size(zeros(3,4))` ?",
+    o: ["`12`", "`[4 3]`", "`[3 4]`", "`7`"], a: 2,
+    e: "`size` renvoie [nombre de lignes, nombre de colonnes], soit `[3 4]`. `numel` donnerait 12." },
+  { q: "Après avoir calculé `x = A\\b`, quelle instruction permet de vérifier que `x` est bien solution du système `Ax = b` ?",
+    o: ["`norm(A*x - b)`", "`det(A*x - b)`", "`trace(A*x - b)`", "`size(A*x - b)`"], a: 0,
+    e: "`norm(A*x - b)` calcule la norme du résidu : elle doit être nulle ou de l'ordre de 1e-15 à cause des arrondis. `det` et `trace` exigent une matrice carrée alors que `A*x - b` est un vecteur, et `size` ne donne que les dimensions. Un test `A*x == b` est peu fiable pour la même raison d'arrondi." },
+  { q: "Que vaut `det([1 2; 3 4])` ?",
+    o: ["`10`", "`2`", "`-2`", "`0`"], a: 2,
+    e: "det = 1·4 − 2·3 = −2 (MATLAB peut afficher -2.0000 à cause des arrondis)." },
+  { q: "Quelle instruction crée le vecteur `[0 2 4 6 8]` avec l'opérateur deux-points, qui incrémente de 2 à chaque élément ?",
+    o: ["`0:2:8`", "`0:8:2`", "`[0,2,8]`", "`linspace(0,8,2)`"], a: 0,
+    e: "L'opérateur `:` s'utilise sous la forme `début:pas:fin` ; sans pas, l'incrément vaut 1 (`1:5`). `0:8:2` ne renvoie que `0`, `[0,2,8]` liste trois valeurs et `linspace(0,8,2)` renvoie 2 points (`[0 8]`). MATLAB n'a pas d'opérateur `++` : pour incrémenter une variable, on écrit `x = x + 1`." },
+  { q: "Que renvoie `rank([1 2; 2 4])` ?",
+    o: ["`0`", "`1`", "`2`", "`4`"], a: 1,
+    e: "La 2e ligne est le double de la 1re : une seule ligne est indépendante, donc le rang est 1." },
+  { q: "Soit la matrice carrée 3x3 `A = [1 2 3; 4 5 6; 7 8 9]`. Quelle instruction extrait sa diagonale sous la forme du vecteur colonne `[1;5;9]` ?",
+    o: ["`diag(A)`", "`diagonal(A)`", "`trace(A)`", "`A(diag)`"], a: 0,
+    e: "`diag(A)` renvoie la diagonale principale sous forme de vecteur colonne `[1;5;9]`. `trace(A)` renvoie la somme de ces éléments (15), `diag(A,1)` extrait la première sur-diagonale (`[2;6]`), et `diagonal` n'est pas une fonction MATLAB." },
+  { q: "Quelle commande renvoie les vecteurs propres `V` et les valeurs propres `D` d'une matrice carrée `A` ?",
+    o: ["`[V,D] = eig(A)`", "`[V,D] = svd(A)`", "`[V,D] = lu(A)`", "`[V,D] = eigs(A,0)`"], a: 0,
+    e: "`[V,D] = eig(A)` donne les vecteurs propres en colonnes de `V` et les valeurs propres sur la diagonale de `D`, avec `A*V = V*D`." },
+  { q: "Quelle instruction extrait la deuxième ligne de la matrice `A` ?",
+    o: ["`A(:,2)`", "`A(2)`", "`A(2,:)`", "`A(2,2)`"], a: 2,
+    e: "`A(2,:)` sélectionne toute la ligne 2 ; `A(:,2)` sélectionne la colonne 2." },
+  { q: "Soit `A = [1 2; 3 4]`. Que renvoie `sum(A)` ?",
+    o: ["`[4 6]`", "`[3 7]`", "`10`", "`[1 2; 4 6]`"], a: 0,
+    e: "Appliquée à une matrice, `sum` additionne chaque colonne et renvoie un vecteur ligne : `[1+3 2+4] = [4 6]`. `sum(A,2)` somme les lignes (`[3;7]`) et `sum(A(:))` donne le total (10)." },
+  { q: "Quelle instruction supprime la deuxième ligne de la matrice `A` ?",
+    o: ["`A(2,:) = []`", "`A(:,2) = []`", "`A(2,:) = 0`", "`A(2) = []`"], a: 0,
+    e: "Affecter `[]` à une ligne la supprime. `A(:,2) = []` supprime la colonne 2, `A(2,:) = 0` remplace la ligne par des zéros, et `A(2) = []` provoque une erreur sur une matrice." },
+  { q: "Quelle est la syntaxe MATLAB usuelle pour résoudre le système linéaire `Ax = b` ?",
+    o: ["`x = b/A`", "`x = A\\b`", "`x = A.*b`", "`x = b*A`"], a: 1,
+    e: "La division à gauche `A\\b` résout `Ax = b` de façon numériquement stable ; elle est préférable à `inv(A)*b`." },
+  { q: "`A/B` est équivalent mathématiquement à :",
+    o: ["`inv(A)*B`", "`A*inv(B)`", "`A.*inv(B)`", "`B*inv(A)`"], a: 1,
+    e: "`A/B` résout `xB = A`, donc `x = A*B⁻¹`. À l'inverse, `A\\B` correspond à `A⁻¹*B`." },
+  { q: "Quelle fonction MATLAB permet aussi de résoudre `Ax = b`, avec des options sur la structure de `A` ?",
+    o: ["`linsolve(A,b)`", "`solve(A,b)`", "`lsolve(A,b)`", "`syssolve(A,b)`"], a: 0,
+    e: "`linsolve(A,b)` résout `Ax = b` et accepte une structure d'options (par exemple matrice triangulaire) pour accélérer le calcul." },
+  { q: "Que se passe-t-il généralement si l'on exécute `A\\b` avec une matrice `A` singulière (`det(A) = 0`) ?",
+    o: ["MATLAB renvoie toujours la solution exacte",
+        "MATLAB affiche un avertissement indiquant que la matrice est singulière ou mal conditionnée",
+        "MATLAB renvoie automatiquement le vecteur nul",
+        "MATLAB ferme la session"], a: 1,
+    e: "MATLAB émet un avertissement du type « Matrix is singular to working precision » et le résultat peut contenir des `Inf` ou être peu fiable. On peut utiliser `pinv` ou `rank` pour analyser le système." },
+  { q: "Que fournit `rref([A b])` ?",
+    o: ["L'inverse de `A`",
+        "La forme échelonnée réduite de la matrice augmentée du système `Ax = b`",
+        "Le déterminant de `A`", "Les valeurs propres de `A`"], a: 1,
+    e: "`rref` applique la méthode de Gauss-Jordan à la matrice augmentée `[A b]`, ce qui permet de lire la solution ou de détecter l'incompatibilité du système." },
+  { q: "Soit la matrice `A = [1 2 3; 4 5 6]` de taille 2x3. Que renvoie `A'` ?",
+    o: ["`[1 4; 2 5; 3 6]`", "`[4 5 6; 1 2 3]`", "`[3 2 1; 6 5 4]`", "`[6 5 4; 3 2 1]`"], a: 0,
+    e: "`A'` est la transposée : les lignes deviennent des colonnes, donc une matrice 2x3 devient une matrice 3x2. Pour une matrice complexe, `A'` est la transposée conjuguée et `A.'` la transposée simple. Les autres résultats correspondent à des inversions d'ordre (`flipud`, `fliplr`, rotation de 180°) qui ne changent pas la taille 2x3." },
+  { q: "Soit `A = zeros(4,5)`. Que renvoie `numel(A)` ?",
+    o: ["`20`", "`[4 5]`", "`5`", "`9`"], a: 0,
+    e: "`numel` renvoie le nombre total d'éléments de la matrice : 4·5 = 20. `size(A)` donne les dimensions `[4 5]` et `length(A)` la plus grande dimension (5)." }
+];
+
+const $ = id => document.getElementById(id);
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const fmt = s => esc(s).replace(/`([^`]+)`/g, '<code>$1</code>');
+const LETTERS = 'ABCD';
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+function mmss(s) {
+  s = Math.max(0, s);
+  return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+}
+function show(id) {
+  ['start', 'quiz', 'result'].forEach(k => { $(k).hidden = k !== id; });
+}
+
+const state = {
+  attempt: 0, first: '', last: '', items: [], answers: [], cur: 0,
+  started: 0, deadline: 0, timer: null, finished: false, score: 0, elapsed: 0, auto: false
+};
+
+function buildItems() {
+  return shuffle(BANK).map(b => ({
+    q: b.q,
+    e: b.e,
+    opts: shuffle(b.o.map((t, k) => ({ t, ok: k === b.a })))
+  }));
+}
+
+function startAttempt(first, last) {
+  state.attempt++;
+  state.first = first;
+  state.last = last;
+  state.items = buildItems();
+  state.answers = new Array(state.items.length).fill(null);
+  state.cur = 0;
+  state.finished = false;
+  state.auto = false;
+  state.started = Date.now();
+  state.deadline = state.started + DURATION * 1000;
+  $('who').textContent = first + ' ' + last;
+  $('att').textContent = 'Tentative n° ' + state.attempt;
+  $('confirm').hidden = true;
+  show('quiz');
+  renderQuestion();
+  renderNav();
+  updateProgress();
+  clearInterval(state.timer);
+  tick();
+  state.timer = setInterval(tick, 250);
+  window.scrollTo(0, 0);
+}
+
+function tick() {
+  const left = Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000));
+  $('timer').textContent = mmss(left);
+  $('timer').className = 'timer' + (left <= 30 ? ' crit' : left <= 120 ? ' low' : '');
+  if (left <= 0 && !state.finished) finish(true);
+}
+
+function answeredCount() { return state.answers.filter(a => a !== null).length; }
+
+function updateProgress() {
+  const n = state.items.length, k = answeredCount();
+  $('pfill').style.width = (100 * k / n) + '%';
+  $('ptxt').textContent = k + ' / ' + n + ' répondues';
+}
+
+function renderQuestion() {
+  const it = state.items[state.cur], n = state.items.length;
+  $('qnum').textContent = 'Question ' + (state.cur + 1) + ' sur ' + n;
+  $('qtext').innerHTML = fmt(it.q);
+  $('opts').innerHTML = it.opts.map((o, k) =>
+    '<label class="opt"><input type="radio" name="opt" value="' + k + '"' +
+    (state.answers[state.cur] === k ? ' checked' : '') + '>' +
+    '<span class="ltr">' + LETTERS[k] + '</span><span class="otxt">' + fmt(o.t) + '</span></label>'
+  ).join('');
+  $('prev').disabled = state.cur === 0;
+  $('next').disabled = state.cur === n - 1;
+}
+
+function renderNav() {
+  $('nav').innerHTML = state.items.map((_, i) => {
+    const done = state.answers[i] !== null;
+    return '<button type="button" class="nb' + (i === state.cur ? ' cur' : '') + (done ? ' done' : '') +
+      '" data-i="' + i + '" aria-label="Question ' + (i + 1) + (done ? ', répondue' : ', sans réponse') + '"' +
+      (i === state.cur ? ' aria-current="true"' : '') + '>' + (i + 1) + '</button>';
+  }).join('');
+}
+
+function goTo(i) {
+  state.cur = Math.min(Math.max(0, i), state.items.length - 1);
+  renderQuestion();
+  renderNav();
+  $('qcard').scrollIntoView({ block: 'start' });
+}
+
+function finish(auto) {
+  if (state.finished) return;
+  state.finished = true;
+  clearInterval(state.timer);
+  state.auto = !!auto;
+  state.score = state.items.reduce((s, it, i) =>
+    s + (state.answers[i] !== null && it.opts[state.answers[i]].ok ? 1 : 0), 0);
+  state.elapsed = auto ? DURATION : Math.min(DURATION, Math.round((Date.now() - state.started) / 1000));
+  show('result');
+  renderResult();
+  window.scrollTo(0, 0);
+}
+
+function summaryText() {
+  const n = state.items.length, pct = Math.round(100 * state.score / n);
+  return state.first + ' ' + state.last + ' : ' + state.score + '/' + n + ' (' + pct + ' %) en ' +
+    mmss(state.elapsed) + ' sur ' + mmss(DURATION) + ', tentative n° ' + state.attempt;
+}
+
+function renderResult() {
+  const n = state.items.length;
+  const right = state.score;
+  const blank = state.answers.filter(a => a === null).length;
+  const wrong = n - right - blank;
+  $('r-who').textContent = state.first + ' ' + state.last + ' · tentative n° ' + state.attempt;
+  $('r-score').textContent = right + ' / ' + n;
+  $('r-pct').textContent = Math.round(100 * right / n) + ' %';
+  $('r-note').hidden = !state.auto;
+  $('r-facts').innerHTML =
+    '<div><dt>' + right + '</dt><dd>correctes</dd></div>' +
+    '<div><dt>' + wrong + '</dt><dd>incorrectes</dd></div>' +
+    '<div><dt>' + blank + '</dt><dd>sans réponse</dd></div>' +
+    '<div><dt>' + mmss(state.elapsed) + '</dt><dd>sur ' + mmss(DURATION) + '</dd></div>';
+  $('only-wrong').checked = false;
+  renderReview();
+}
+
+function statusOf(i) {
+  const a = state.answers[i];
+  if (a === null) return 'blank';
+  return state.items[i].opts[a].ok ? 'ok' : 'bad';
+}
+
+function reviewHTML(it, i) {
+  const a = state.answers[i], st = statusOf(i);
+  const label = { ok: 'Correct', bad: 'Incorrect', blank: 'Sans réponse' }[st];
+  const lis = it.opts.map((o, k) => {
+    const cls = o.ok ? 'good' : (k === a ? 'wrong' : '');
+    const tag = o.ok && k === a ? 'Votre réponse · bonne réponse'
+      : o.ok ? 'Bonne réponse' : k === a ? 'Votre réponse' : '';
+    return '<li class="' + cls + '"><span class="ltr">' + LETTERS[k] + '</span><span class="otxt">' + fmt(o.t) +
+      '</span>' + (tag ? '<span class="tag">' + tag + '</span>' : '') + '</li>';
+  }).join('');
+  return '<article class="rv"><div class="rvh"><span class="rq">Question ' + (i + 1) + '</span>' +
+    '<span class="badge ' + st + '">' + label + '</span></div>' +
+    '<p class="qtext">' + fmt(it.q) + '</p><ul class="ro">' + lis + '</ul>' +
+    '<p class="why"><strong>Explication. </strong>' + fmt(it.e) + '</p></article>';
+}
+
+function renderReview() {
+  const only = $('only-wrong').checked;
+  const html = state.items.map((it, i) => (only && statusOf(i) === 'ok') ? '' : reviewHTML(it, i)).join('');
+  $('review').innerHTML = html || '<p class="empty">Aucune erreur : toutes les réponses sont correctes.</p>';
+}
+
+/* Evenements */
+$('form').addEventListener('submit', e => {
+  e.preventDefault();
+  const last = $('last').value.trim(), first = $('first').value.trim();
+  $('e-last').textContent = last ? '' : 'Saisissez votre nom.';
+  $('e-first').textContent = first ? '' : 'Saisissez votre prénom.';
+  $('last').setAttribute('aria-invalid', last ? 'false' : 'true');
+  $('first').setAttribute('aria-invalid', first ? 'false' : 'true');
+  if (!last) { $('last').focus(); return; }
+  if (!first) { $('first').focus(); return; }
+  startAttempt(first, last);
+});
+
+$('opts').addEventListener('change', e => {
+  if (e.target && e.target.name === 'opt') {
+    state.answers[state.cur] = Number(e.target.value);
+    renderNav();
+    updateProgress();
+  }
+});
+$('prev').addEventListener('click', () => goTo(state.cur - 1));
+$('next').addEventListener('click', () => goTo(state.cur + 1));
+$('nav').addEventListener('click', e => {
+  const b = e.target.closest('button[data-i]');
+  if (b) goTo(Number(b.dataset.i));
+});
+
+$('finish').addEventListener('click', () => {
+  const left = state.items.length - answeredCount();
+  $('confirm-txt').textContent = left > 0
+    ? 'Il reste ' + left + (left > 1 ? ' questions sans réponse.' : ' question sans réponse.') + ' Terminer le QCM maintenant ?'
+    : 'Toutes les questions ont une réponse. Terminer le QCM maintenant ?';
+  $('confirm').hidden = false;
+  $('confirm-yes').focus();
+});
+$('confirm-no').addEventListener('click', () => { $('confirm').hidden = true; });
+$('confirm-yes').addEventListener('click', () => finish(false));
+
+$('only-wrong').addEventListener('change', renderReview);
+$('retry').addEventListener('click', () => {
+  $('again').hidden = false;
+  show('start');
+  window.scrollTo(0, 0);
+  $('go').focus();
+});
+$('copy').addEventListener('click', async () => {
+  const btn = $('copy');
+  try {
+    await navigator.clipboard.writeText(summaryText());
+    btn.textContent = 'Copié';
+  } catch (err) {
+    btn.textContent = 'Copie impossible';
+  }
+  setTimeout(() => { btn.textContent = 'Copier le résultat'; }, 2000);
+});
+</script>
+</body>
+</html>
